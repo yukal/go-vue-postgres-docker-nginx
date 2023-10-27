@@ -1,2 +1,2 @@
-# go-vue-docker-nginx
+# go-vue-postgres-docker-nginx
 Golang webserver starter kit
