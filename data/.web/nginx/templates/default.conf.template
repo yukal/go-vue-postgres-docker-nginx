@@ -1,0 +1,103 @@
+# Documentation:
+# https://nginx.org/en/docs/http/ngx_http_core_module.html
+# https://nginx.org/en/docs/http/ngx_http_proxy_module.html
+# https://docs.nginx.com/nginx/admin-guide/web-server/serving-static-content/
+
+# server_tokens off;
+
+map $http_origin $cors_origin {
+    '~^https?\://localhost(?:\:808[0-3])?$' '$http_origin';
+}
+map $http_origin $cors_headers {
+    '~^https?\://localhost(?:\:808[0-3])?$' 'Authorization,Accept,Cache-Control,Content-Range,Content-Type,DNT,If-Modified-Since,Keep-Alive,Origin,Range,User-Agent,X-Requested-With,X-CustomHeader,X-Get-Fields,X-Data-Type,X-Jointly,X-Role';
+}
+map $http_origin $cors_methods {
+    '~^https?\://localhost(?:\:808[0-3])?$' 'GET,POST,PUT,PATCH,DELETE,HEAD,OPTIONS';
+}
+map $http_origin $cors_creds {
+    '~^https?\://localhost(?:\:808[0-3])?$' 'true';
+}
+
+server {
+    server_name  ${HOSTNAME};
+
+    listen       ${NGINX_PORT};
+    listen  [::]:${NGINX_PORT};
+
+    #access_log  /var/log/nginx/host.access.log  main;
+
+    include cors.conf;
+
+    location = /favicon.ico {
+        access_log off;
+        log_not_found off;
+    }
+
+    location /img/  {
+        root /home/data/;
+    }
+
+    location /api/ {
+        if ($request_method = 'OPTIONS') {
+            include cors.conf;
+
+            add_header 'Access-Control-Max-Age' 86400;
+            add_header 'Content-Length' 0;
+
+            return 204;
+        }
+
+        proxy_redirect off;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forward-For $proxy_add_x_forwarded_for;
+
+        proxy_pass http://${API_HOST}:${API_PORT};
+    }
+
+    location / {
+        if ($request_method = 'OPTIONS') {
+            include cors.conf;
+
+            # add_header 'Content-Type' 'text/plain; charset=utf-8';
+            add_header 'Access-Control-Max-Age' 86400;
+            add_header 'Content-Length' 0;
+
+            return 204;
+        }
+
+        root   /home/html;
+        index  index.html index.htm;
+
+        try_files $uri $uri/ /index.html;
+    }
+
+    # location = /_.gif {
+    #     empty_gif;
+    # }
+
+    location ~ /\. {
+        access_log off;
+        log_not_found off;
+        deny all;
+    }
+
+    location ~ ~$ {
+        access_log off;
+        log_not_found off;
+        deny all;
+    }
+
+
+    # redirect server error pages to the static pages:
+
+    # error_page  404              /404.html;
+    error_page  500 502 503 504  /50x.html;
+    location = /50x.html {
+        root   /usr/share/nginx/html;
+    }
+
+    # allow 127.0.0.1;
+    # allow 172.25.0.1;
+    # deny all;
+}

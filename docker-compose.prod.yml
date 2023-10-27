@@ -17,7 +17,6 @@ services:
       POSTGRES_USER_FILE: /run/secrets/postgres_user
       POSTGRES_PASSWORD_FILE: /run/secrets/postgres_password
       PGDATA: /var/lib/postgresql/data/pgdata
-      # POSTGRES_DB: postgres
     ports:
       - "${POSTGRES_PORT}"
     secrets:
@@ -45,8 +44,6 @@ services:
       - "${API_INTERNAL_PORT}"
     networks:
       - backend
-    # command: ash -c "/go/bin/server"
-    # command: /usr/sbin/server
     secrets:
       - postgres_user
       - postgres_password
