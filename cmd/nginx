@@ -1,0 +1,115 @@
+#!/usr/bin/bash
+#
+# node           : nginx:alpine
+# home dir       : /usr/share/nginx/html
+# data dir       : /etc/nginx
+# config file(s) : /etc/nginx/nginx.conf
+#                  /etc/nginx/conf.d/default.conf
+# log(s)         : <stdout>
+
+CONTAINER_NAME=vite
+CONTAINER_IMAGE=nginx:alpine
+
+HOSTNAME=vite
+NGINX_HOST=0.0.0.0
+NGINX_PORT=80
+
+IS_INTERACTIVE=false
+IS_TERMINATE=false
+
+while [[ $# -gt 0 ]]; do
+  case $1 in
+    # -e|--extension)
+    #   EXTENSION="$2"
+    #   shift # past argument
+    #   shift # past value
+    #   ;;
+    -q|--quit|--stop)
+      IS_TERMINATE=true
+      shift # past argument
+      shift # past value
+      ;;
+    -it|--interactive)
+      IS_INTERACTIVE=true
+      shift # past argument
+      shift # past value
+      ;;
+    --default)
+      DEFAULT=YES
+      shift # past argument
+      ;;
+    -*|--*)
+      echo "Unknown option $1"
+      exit 1
+      ;;
+    *)
+      POSITIONAL_ARGS+=("$1") # save positional arg
+      shift # past argument
+      ;;
+  esac
+done
+
+# Get container ID and state of the Docker image
+CONTAINER_ID=$(docker ps -q -a -f name="${CONTAINER_NAME}")
+if [ -z "$CONTAINER_ID" ];
+    then CONTAINER_STATE=false
+    else CONTAINER_STATE=$(docker inspect -f {{.State.Running}} $CONTAINER_ID)
+fi
+
+if [ -z "$CONTAINER_ID" ]; then
+  # The container hasn't found. Run from the image
+  # -v $(pwd)/data/.web/initd.server.sh:/etc/init.d/server \
+
+  if $IS_INTERACTIVE; then
+      # Run interactively
+      docker run -it --rm --name $CONTAINER_NAME \
+          --hostname $HOSTNAME \
+          -p 8082:80 \
+          -v ./data/.web/nginx-main.conf:/etc/nginx/nginx.conf:ro \
+          -v ./data/.web/nginx-server.conf:/etc/nginx/conf.d/default.conf:ro \
+          -v ./data/.web/server:/usr/sbin/server:ro \
+          -v ./vite/dist/:/usr/share/nginx/html/:ro \
+          -v ./data/img/:/home/data/img/:ro \
+          -e NGINX_HOST=$NGINX_HOST \
+          -e NGINX_PORT=$NGINX_PORT \
+          "$CONTAINER_IMAGE"
+  else
+      # Run in background mode
+      docker run --read-only -d --name $CONTAINER_NAME \
+          --hostname $HOSTNAME \
+          -p 8082:80 \
+          -v ./data/.web/nginx-main.conf:/etc/nginx/nginx.conf:ro \
+          -v ./data/.web/nginx-server.conf:/etc/nginx/conf.d/default.conf:ro \
+          -v ./data/.web/server:/usr/sbin/server:ro \
+          -v ./vite/dist/:/usr/share/nginx/html/:ro \
+          -v ./data/img/:/home/data/img/:ro \
+          -e NGINX_HOST=$NGINX_HOST \
+          -e NGINX_PORT=$NGINX_PORT \
+          "$CONTAINER_IMAGE"
+  fi
+
+else
+  if $IS_TERMINATE; then
+
+    docker container stop "$CONTAINER_ID"
+    exit 0
+
+  fi
+
+  # The container has found. Run from the container
+  if [ "$CONTAINER_STATE" == "true" ]; then
+
+    docker exec -it $CONTAINER_ID $ARG
+
+  else
+    if $IS_INTERACTIVE; then
+
+      docker container start -ai $CONTAINER_ID
+
+    else
+
+      docker container start $CONTAINER_ID
+
+    fi
+  fi
+fi

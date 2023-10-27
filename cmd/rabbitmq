@@ -1,0 +1,106 @@
+#!/usr/bin/bash
+#
+# node           : rabbit@rabbitmq
+# home dir       : /var/lib/rabbitmq
+# data dir       : /var/lib/rabbitmq/mnesia/rabbit@rabbitmq
+# config file(s) : /etc/rabbitmq/conf.d/10-defaults.conf
+# log(s)         : <stdout>
+
+CONTAINER_NAME=rabbitmq
+CONTAINER_IMAGE=rabbitmq:3-management
+
+HOSTNAME=rabbitmq
+RABBITMQ_VHOST=rabbitmq
+RABBITMQ_USER=user
+RABBITMQ_PASS=password
+
+IS_INTERACTIVE=false
+IS_TERMINATE=false
+
+while [[ $# -gt 0 ]]; do
+  case $1 in
+    # -e|--extension)
+    #   EXTENSION="$2"
+    #   shift # past argument
+    #   shift # past value
+    #   ;;
+    -q|--quit|--stop)
+      IS_TERMINATE=true
+      shift # past argument
+      shift # past value
+      ;;
+    -it|--interactive)
+      IS_INTERACTIVE=true
+      shift # past argument
+      shift # past value
+      ;;
+    --default)
+      DEFAULT=YES
+      shift # past argument
+      ;;
+    -*|--*)
+      echo "Unknown option $1"
+      exit 1
+      ;;
+    *)
+      POSITIONAL_ARGS+=("$1") # save positional arg
+      shift # past argument
+      ;;
+  esac
+done
+
+# Get container ID and state of the Docker image
+CONTAINER_ID=$(docker ps -q -a -f name="${CONTAINER_NAME}")
+if [ -z "$CONTAINER_ID" ];
+    then CONTAINER_STATE=false
+    else CONTAINER_STATE=$(docker inspect -f {{.State.Running}} $CONTAINER_ID)
+fi
+
+if [ -z "$CONTAINER_ID" ]; then
+  # The container hasn't found. Run from the image
+
+  if $IS_INTERACTIVE; then
+      # Run interactively
+      docker run -it --rm --name $CONTAINER_NAME \
+          --hostname $HOSTNAME \
+          -p 5672:5672 -p 15672:15672 \
+          -e RABBITMQ_DEFAULT_VHOST=$RABBITMQ_VHOST \
+          -e RABBITMQ_DEFAULT_USER=$RABBITMQ_USER \
+          -e RABBITMQ_DEFAULT_PASS=$RABBITMQ_PASS \
+          "$CONTAINER_IMAGE"
+  else
+      # Run in background mode
+      docker run -d --name $CONTAINER_NAME \
+          --hostname $HOSTNAME \
+          -p 5672:5672 -p 15672:15672 \
+          -e RABBITMQ_DEFAULT_VHOST=$RABBITMQ_VHOST \
+          -e RABBITMQ_DEFAULT_USER=$RABBITMQ_USER \
+          -e RABBITMQ_DEFAULT_PASS=$RABBITMQ_PASS \
+          "$CONTAINER_IMAGE"
+  fi
+
+else
+  if $IS_TERMINATE; then
+
+    docker container stop "$CONTAINER_ID"
+    exit 0
+
+  fi
+
+  # The container has found. Run from the container
+  if [ "$CONTAINER_STATE" == "true" ]; then
+
+    docker exec -it $CONTAINER_ID $ARG
+
+  else
+    if $IS_INTERACTIVE; then
+
+      docker container start -ai $CONTAINER_ID
+
+    else
+
+      docker container start $CONTAINER_ID
+
+    fi
+  fi
+fi
