@@ -1,0 +1,96 @@
+# Documentation:
+# https://docs.docker.com/compose/compose-file/compose-file-v3/
+# https://docs.docker.com/engine/reference/commandline/compose/
+# 
+# https://docs.docker.com/compose/environment-variables/set-environment-variables/
+# https://docs.docker.com/compose/use-secrets/
+
+version: '3.8'
+
+services:
+
+  postgres:
+    image: postgres:15-alpine
+    restart: always
+    container_name: goweb_db
+    environment:
+      POSTGRES_USER_FILE: /run/secrets/postgres_user
+      POSTGRES_PASSWORD_FILE: /run/secrets/postgres_password
+      PGDATA: /var/lib/postgresql/data/pgdata
+      # POSTGRES_DB: postgres
+    ports:
+      - "${POSTGRES_PORT}"
+    secrets:
+      - postgres_user
+      - postgres_password
+    volumes:
+      - ./data/database/postgres:/var/lib/postgresql/data
+    networks:
+      - backend
+
+  api:
+    image: gowebapi:v1
+    build: .
+    restart: always
+    container_name: goweb_api
+    environment:
+      DB_HOST: "postgres"
+      DB_NAME: ${POSTGRES_DBNAME}
+      DB_PORT: ${POSTGRES_PORT}
+      DB_USER_FILE: /run/secrets/postgres_user
+      DB_PASS_FILE: /run/secrets/postgres_password
+      API_PORT: "${API_INTERNAL_PORT}"
+      GIN_MODE: "release"
+    ports:
+      - "${API_INTERNAL_PORT}"
+    networks:
+      - backend
+    # command: ash -c "/go/bin/server"
+    # command: /usr/sbin/server
+    secrets:
+      - postgres_user
+      - postgres_password
+    depends_on:
+      - postgres
+
+  nginx:
+    image: nginx:alpine
+    restart: always
+    container_name: goweb_web
+    environment:
+      NGINX_PORT: ${NGINX_INTERNAL_PORT}
+      API_PORT: ${API_INTERNAL_PORT}
+      API_HOST: "api"
+    ports:
+      - "${NGINX_EXTERNAL_PORT}:${NGINX_INTERNAL_PORT}"
+    volumes:
+      - ./data/.web/nginx/templates:/etc/nginx/templates:ro
+      - ./data/.web/nginx/cors.conf:/etc/nginx/cors.conf:ro
+      - ./data/img/:/home/data/img/:ro
+      - ./vite/dist/:/home/html/:ro
+    networks:
+      - backend
+    depends_on:
+      - postgres
+      - api
+
+  adminer:
+    image: adminer
+    restart: always
+    container_name: goweb_adm
+    ports:
+      - "${ADMINER_EXTERNAL_PORT}:${ADMINER_INTERNAL_PORT}"
+    networks:
+      - backend
+    depends_on:
+      - postgres
+
+secrets:
+  postgres_password:
+    file: ./data/.web/secrets/postgres_password.txt
+  postgres_user:
+    file: ./data/.web/secrets/postgres_user.txt
+
+networks:
+  backend:
+    # external: true
