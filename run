@@ -1,0 +1,104 @@
+#!/usr/bin/bash
+
+PROJECT_NAME=goweb
+
+# see: https://pkg.go.dev/text/template
+read -r -d '' TEMPLATE << EOM
+{{- \$IPAddress := .NetworkSettings.Networks.goweb_backend.IPAddress -}}
+{{- \$NetworkMode := .HostConfig.NetworkMode -}}
+
+{{ .State.Status }} {{ .Name }}
+  aliases: {{(join .NetworkSettings.Networks.goweb_backend.Aliases ", ")}}
+  {{ range \$p, \$conf := .HostConfig.PortBindings -}}
+    network: {{ \$IPAddress }} {{(index \$conf 0).HostPort}} ({{ \$NetworkMode }})
+  {{ end }}
+EOM
+
+ContainerIP() {
+  docker inspect -f '{{ .NetworkSettings.Networks.goweb_backend.IPAddress }}' $1
+}
+
+ContainerPort() {
+  docker inspect -f '{{ range $p, $conf := .HostConfig.PortBindings -}}{{(index $conf 0).HostPort}}{{ end }}' $1
+}
+
+case $1 in
+  "build")
+    go build ./cmd/server
+    go build ./cmd/spider
+  ;;
+
+  "up:dev")
+    docker-compose --project-name $PROJECT_NAME -f docker-compose.dev.yml up -d
+    ;;
+
+  "dn:dev")
+    docker-compose --project-name $PROJECT_NAME -f docker-compose.dev.yml down --rmi local
+    ;;
+
+  "up:prod")
+    docker-compose --project-name $PROJECT_NAME -f docker-compose.prod.yml --env-file .env up -d
+    ;;
+
+  "dn:prod")
+    docker-compose --project-name $PROJECT_NAME -f docker-compose.prod.yml --env-file .env down --rmi local
+    ;;
+
+  "stat")
+    docker inspect -f "$TEMPLATE" "${PROJECT_NAME}_db"
+    docker inspect -f "$TEMPLATE" "${PROJECT_NAME}_adm"
+    ;;
+
+  "client")
+    cd client && npm run dev
+    ;;
+
+  "server")
+    export DB_USER_FILE=./data/.web/secrets/postgres_user.txt
+    export DB_PASS_FILE=./data/.web/secrets/postgres_password.txt
+    export DB_HOST=$(ContainerIP goweb_db)
+    export DB_PORT=5432
+    export DB_NAME=postgres
+    export HOSTNAME=localhost
+    export API_PORT=50598
+
+    # export GIN_MODE=release
+    # export GIN_MODE=debug
+
+    go run ./cmd/server
+    ;;
+
+  --default)
+    DEFAULT=YES
+    shift # past argument
+    ;;
+
+  -*|--*)
+    echo "Unknown option $1"
+    exit 1
+    ;;
+
+  *)
+    echo "Epmty arguments passed. Try:"
+    echo
+
+    echo "  run build"
+    echo "  run client"
+    echo "  run server"
+    echo
+    echo "  run stat"
+    echo
+
+    echo "  run up:dev"
+    echo "  run dn:dev"
+    echo
+    echo "  run up:prod"
+    echo "  run dn:prod"
+    echo
+
+    exit 1
+
+    # POSITIONAL_ARGS+=("$1") # save positional arg
+    # shift # past argument
+    ;;
+esac
