@@ -7,10 +7,10 @@
 #                  /etc/nginx/conf.d/default.conf
 # log(s)         : <stdout>
 
-CONTAINER_NAME=vite
+CONTAINER_NAME=client
 CONTAINER_IMAGE=nginx:alpine
 
-HOSTNAME=vite
+HOSTNAME=client
 NGINX_HOST=0.0.0.0
 NGINX_PORT=80
 
@@ -68,7 +68,7 @@ if [ -z "$CONTAINER_ID" ]; then
           -v ./data/.web/nginx-main.conf:/etc/nginx/nginx.conf:ro \
           -v ./data/.web/nginx-server.conf:/etc/nginx/conf.d/default.conf:ro \
           -v ./data/.web/server:/usr/sbin/server:ro \
-          -v ./vite/dist/:/usr/share/nginx/html/:ro \
+          -v ./client/dist/:/usr/share/nginx/html/:ro \
           -v ./data/img/:/home/data/img/:ro \
           -e NGINX_HOST=$NGINX_HOST \
           -e NGINX_PORT=$NGINX_PORT \
@@ -81,7 +81,7 @@ if [ -z "$CONTAINER_ID" ]; then
           -v ./data/.web/nginx-main.conf:/etc/nginx/nginx.conf:ro \
           -v ./data/.web/nginx-server.conf:/etc/nginx/conf.d/default.conf:ro \
           -v ./data/.web/server:/usr/sbin/server:ro \
-          -v ./vite/dist/:/usr/share/nginx/html/:ro \
+          -v ./client/dist/:/usr/share/nginx/html/:ro \
           -v ./data/img/:/home/data/img/:ro \
           -e NGINX_HOST=$NGINX_HOST \
           -e NGINX_PORT=$NGINX_PORT \

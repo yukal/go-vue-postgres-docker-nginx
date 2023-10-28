@@ -64,7 +64,7 @@ services:
       - ./data/.web/nginx/templates:/etc/nginx/templates:ro
       - ./data/.web/nginx/cors.conf:/etc/nginx/cors.conf:ro
       - ./data/img/:/home/data/img/:ro
-      - ./vite/dist/:/home/html/:ro
+      - ./client/dist/:/home/html/:ro
     networks:
       - backend
     depends_on:
