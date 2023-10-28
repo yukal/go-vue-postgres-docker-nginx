@@ -58,7 +58,6 @@ fi
 
 if [ -z "$CONTAINER_ID" ]; then
   # The container hasn't found. Run from the image
-  # -v $(pwd)/data/.web/initd.server.sh:/etc/init.d/server \
 
   if $IS_INTERACTIVE; then
       # Run interactively
@@ -75,7 +74,7 @@ if [ -z "$CONTAINER_ID" ]; then
           "$CONTAINER_IMAGE"
   else
       # Run in background mode
-      docker run --read-only -d --name $CONTAINER_NAME \
+      docker run -d --name $CONTAINER_NAME \
           --hostname $HOSTNAME \
           -p 8082:80 \
           -v ./data/.web/nginx-main.conf:/etc/nginx/nginx.conf:ro \
