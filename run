@@ -47,15 +47,18 @@ case $1 in
     ;;
 
   "stat")
+    # for dev mode
     docker inspect -f "$TEMPLATE" "${PROJECT_NAME}_db"
     docker inspect -f "$TEMPLATE" "${PROJECT_NAME}_adm"
     ;;
 
   "client")
+    # for dev mode
     cd client && npm run dev
     ;;
 
   "server")
+    # for dev mode
     export DB_USER_FILE=../data/.web/secrets/postgres_user.txt
     export DB_PASS_FILE=../data/.web/secrets/postgres_password.txt
     export DB_HOST=$(ContainerIP goweb_db)

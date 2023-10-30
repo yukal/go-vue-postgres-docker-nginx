@@ -3,6 +3,9 @@
 #
 # docker build -t <name>/<subname>:<tag> .
 # docker build -t yu/goweb:v1 .
+#
+# docker build -t <name>:<tag> .
+# docker build -t goweb:v1 .
 
 FROM golang:alpine AS build
 
