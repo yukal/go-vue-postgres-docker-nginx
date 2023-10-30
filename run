@@ -37,6 +37,8 @@ case $1 in
     ;;
 
   "up:prod")
+    cd client && npm run build
+    cd ..
     docker-compose --project-name $PROJECT_NAME -f docker-compose.prod.yml --env-file .env up -d
     ;;
 
@@ -45,17 +47,20 @@ case $1 in
     ;;
 
   "stat")
+    # for dev mode
     docker inspect -f "$TEMPLATE" "${PROJECT_NAME}_db"
     docker inspect -f "$TEMPLATE" "${PROJECT_NAME}_adm"
     ;;
 
   "client")
+    # for dev mode
     cd client && npm run dev
     ;;
 
   "server")
-    export DB_USER_FILE=./data/.web/secrets/postgres_user.txt
-    export DB_PASS_FILE=./data/.web/secrets/postgres_password.txt
+    # for dev mode
+    export DB_USER_FILE=../data/.web/secrets/postgres_user.txt
+    export DB_PASS_FILE=../data/.web/secrets/postgres_password.txt
     export DB_HOST=$(ContainerIP goweb_db)
     export DB_PORT=5432
     export DB_NAME=postgres
@@ -65,7 +70,7 @@ case $1 in
     # export GIN_MODE=release
     # export GIN_MODE=debug
 
-    go run ./cmd/server
+    cd server && go run ./cmd/api
     ;;
 
   --default)

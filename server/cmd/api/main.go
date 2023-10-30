@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 	"time"
-	"yu/webserver/internal/app/Repository/postgres"
+	"yu/goweb/internal/app/Repository/postgres"
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
@@ -49,7 +49,7 @@ func main() {
 		server.ForwardedByClientIP = true
 
 		// (!) Dont use in production mode
-		server.Static("/img", "./data/img")
+		server.Static("/img", "../data/img")
 
 		corsConfig := cors.Config{
 			AllowAllOrigins: true,

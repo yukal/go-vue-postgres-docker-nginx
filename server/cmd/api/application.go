@@ -5,7 +5,7 @@ import (
 	"io"
 	"net/http"
 	"os"
-	"yu/webserver/internal/app/Repository/postgres"
+	"yu/goweb/internal/app/Repository/postgres"
 
 	"github.com/gin-gonic/gin"
 )
