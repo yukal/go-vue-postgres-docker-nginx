@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 	"time"
-	"yu/webserver/internal/app/Repository/postgres"
+	"yu/goweb/internal/app/Repository/postgres"
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"

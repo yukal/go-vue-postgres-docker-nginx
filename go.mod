@@ -1,4 +1,4 @@
-module yu/webserver
+module yu/goweb
 
 go 1.20
 
