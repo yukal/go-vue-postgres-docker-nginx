@@ -21,8 +21,8 @@ Each microservice or lambda function you can assign to a specific route as a [pr
    ```
 
 3. Check if routes are available
-  - Web: http://localhost:8080/
-  - API: http://localhost:8080/api/ping/
+  - Web: http://localhost:8080
+  - API: http://localhost:8080/api/ping
   - Img: http://localhost:8080/img/index.jpg
 
 4. Cleanup
@@ -37,8 +37,8 @@ Each microservice or lambda function you can assign to a specific route as a [pr
    ```
 
 2. Check if routes are available
-  - Web: http://localhost:8080/
-  - API: http://localhost:8080/api/ping/
+  - Web: http://localhost:8080
+  - API: http://localhost:8080/api/ping
   - Img: http://localhost:8080/img/index.jpg
 
 3. Cleanup
