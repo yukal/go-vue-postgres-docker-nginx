@@ -49,7 +49,7 @@ func main() {
 		server.ForwardedByClientIP = true
 
 		// (!) Dont use in production mode
-		server.Static("/img", "./data/img")
+		server.Static("/img", "../data/img")
 
 		corsConfig := cors.Config{
 			AllowAllOrigins: true,
